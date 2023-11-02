@@ -64,26 +64,25 @@ module.exports = {
   },
   async deleteThought(req, res) {
     try {
-      const thought = await Thought.findOneAndDelete(
-        { _id: req.params.thoughtId },
-        { $pull: req.body },
-        { runValidators: true, new: true }
-      );
-      // const user = await User.findOneAndUpdate(
-      //   { _id: req.params.thoughtId },
-      //   { $pull: req.body.thoughtId },
-      //   { runValidators: true, new: true }
-      // );
+      const thought = await Thought.findOneAndRemove({ _id: req.params.thoughtId });
+
       if (!thought) {
         return res.status(404).json({ message: 'No thought with this id!' });
       }
-      // if (!user) {
-      //   return res.status(404).json({ message: 'No thought with this id!' });
-      // }
+      const user = await User.findOneAndUpdate(
+        { username: thought.username },
+        { $pull: { thoughts: req.params.thoughtId} },
+        { new: true }
+      );
 
-      res.json(thought);
+      if (!user) {
+        return res.status(404).json({
+          message: 'Reaction Added, but found no Thought with that ID',
+        });
+      }
+
+      res.json({ message: 'Thought successfully deleted!' });
     } catch (err) {
-      console.log(err);
       res.status(500).json(err);
     }
   },
